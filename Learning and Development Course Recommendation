@@ -1,0 +1,65 @@
+##Learning and Development Course Recommendation
+###Description: Recommend courses or training programs to employees based on their career trajectory, skills, and interests.
+###Business Relevance: Personalizes employee development, ensuring that training resources are used effectively.
+
+import pandas as pd
+
+# Creating dummy data
+
+# Employee data
+employees = {
+    'EmployeeID': [1, 2, 3, 4, 5],
+    'Name': ['Alice', 'Bob', 'Charlie', 'David', 'Eve'],
+    'Role': ['Developer', 'Data Scientist', 'Manager', 'Developer', 'HR']
+}
+
+# Course data
+courses = {
+    'CourseID': [101, 102, 103, 104, 105, 106],
+    'CourseName': ['Python Basics', 'Advanced ML', 'Leadership Skills', 'JavaScript Essentials', 'HR Best Practices', 'Data Analysis with R'],
+    'Topics': ['Programming,Python', 'ML,Deep Learning', 'Management,Leadership', 'Programming,JavaScript', 'HR,Management', 'Data Analysis,R'],
+    'Difficulty': ['Beginner', 'Advanced', 'Intermediate', 'Beginner', 'Intermediate', 'Advanced']
+}
+
+# Employee-Course history
+history = {
+    'EmployeeID': [1, 1, 2, 2, 2, 3, 4, 4, 5],
+    'CourseID': [101, 104, 102, 105, 106, 103, 101, 104, 105]
+}
+
+df_employees = pd.DataFrame(employees)
+df_courses = pd.DataFrame(courses)
+df_history = pd.DataFrame(history)
+
+df_employees, df_courses, df_history
+
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Step 1: Using the TF-IDF vectorizer to transform course topics into vectors
+vectorizer = TfidfVectorizer()
+tfidf_matrix = vectorizer.fit_transform(df_courses['Topics'])
+
+# Helper function to compute the user profile and recommend courses
+def recommend_courses(employee_id, top_n=3):
+    # Get the courses that the employee has taken
+    taken_courses = df_history[df_history['EmployeeID'] == employee_id]['CourseID'].tolist()
+    taken_course_indices = df_courses[df_courses['CourseID'].isin(taken_courses)].index.tolist()
+    
+    # Compute the user profile by averaging the tf-idf vectors of taken courses
+    user_profile = tfidf_matrix[taken_course_indices].mean(axis=0)
+    
+    # Compute the cosine similarity between the user profile and all courses
+    cosine_similarities = cosine_similarity(user_profile, tfidf_matrix)
+    
+    # Rank courses based on their cosine similarity to the user profile
+    course_indices = cosine_similarities.argsort().flatten()[-(top_n+len(taken_course_indices)):]
+    
+    # Exclude courses that the user has already taken
+    recommended_indices = [index for index in course_indices if index not in taken_course_indices][:top_n]
+    
+    return df_courses.iloc[recommended_indices]
+
+# Recommend courses for the first employee (Alice)
+recommend_courses(1)

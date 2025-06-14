@@ -3,6 +3,7 @@
 ###Business Relevance: Personalizes employee development, ensuring that training resources are used effectively.
 
 import pandas as pd
+import numpy as np
 
 # Creating dummy data
 
@@ -51,10 +52,10 @@ def recommend_courses(employee_id, top_n=3):
     user_profile = tfidf_matrix[taken_course_indices].mean(axis=0)
     
     # Compute the cosine similarity between the user profile and all courses
-    cosine_similarities = cosine_similarity(user_profile, tfidf_matrix)
-    
+    cosine_similarities = cosine_similarity(user_profile, tfidf_matrix).flatten()
+
     # Rank courses based on their cosine similarity to the user profile
-    course_indices = cosine_similarities.argsort().flatten()[-(top_n+len(taken_course_indices)):]
+    course_indices = np.argsort(-cosine_similarities)
     
     # Exclude courses that the user has already taken
     recommended_indices = [index for index in course_indices if index not in taken_course_indices][:top_n]
@@ -63,3 +64,4 @@ def recommend_courses(employee_id, top_n=3):
 
 # Recommend courses for the first employee (Alice)
 recommend_courses(1)
+
